@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 #include <QtWidgets/QApplication>
-#include "MainWindow.h"
+#include "ui/MainWindow.h"
 
 using namespace std;
 

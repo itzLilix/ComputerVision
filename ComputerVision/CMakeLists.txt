@@ -8,13 +8,15 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 6.11.2 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 6.11.2 REQUIRED COMPONENTS Widgets Gui)
 
 qt_add_executable(ComputerVision
     main.cpp
-    MainWindow.cpp
-    MainWindow.h
-    MainWindow.ui
 )
 
-target_link_libraries(ComputerVision PRIVATE Qt6::Widgets)
+target_link_libraries(ComputerVision PRIVATE Qt6::Widgets Qt6::Gui)
+
+target_sources(ComputerVision PRIVATE
+    "ui/MainWindow.cpp"
+    "ui/MainWindow.h"
+ "image/ImageProcessor.h" "image/ImageProcessor.cpp")

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <QMessageBox>
 
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -10,20 +11,44 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     auto* central = new QWidget(this);
-    auto* layout = new QVBoxLayout(central);
+    auto* mainLayout = new QHBoxLayout(central);
 
-    uploadButton = new QPushButton(tr("Upload image"), this);
-    layout->addWidget(uploadButton);
+    imageModel = new ImageModel(this);
+    imageView = new ImageView(this);
 
-    resetButton = new QPushButton(tr("Reset image"), this);
-    layout->addWidget(resetButton);
+    mainLayout->addWidget(imageView, 1);
 
     setCentralWidget(central);
 
+    auto* rightBarLayout = new QVBoxLayout();
+    auto* setImgBtnsLayout = new QHBoxLayout();
+
+    uploadButton = new QPushButton(tr("Upload image"), this);
+    clearButton = new QPushButton(tr("Clear image"), this);
+
+    setImgBtnsLayout->addWidget(uploadButton);
+    setImgBtnsLayout->addWidget(clearButton);
+    
+    rightBarLayout->addLayout(setImgBtnsLayout);
+    mainLayout->addLayout(rightBarLayout);
+
+    rightBarLayout->addStretch();
+
+
+
     connect(uploadButton, &QPushButton::clicked,
         this, &MainWindow::onUploadClicked);
-    connect(resetButton, &QPushButton::clicked,
-        this, &MainWindow::onResetClicked);
+    connect(clearButton, &QPushButton::clicked,
+        this, &MainWindow::onClearClicked);
+
+    connect(imageModel, &ImageModel::newImageLoaded,
+        imageView, &ImageView::setImage);
+    connect(imageModel, &ImageModel::imageChanged,
+        imageView, &ImageView::setImage);
+    connect(imageModel, &ImageModel::imageCleared, imageView,
+        [imageView = this->imageView] { imageView->setImage(QImage()); });
+
+    connect(imageView, &ImageView::imageDropped, imageModel, &ImageModel::loadFile);
 }
 
 void MainWindow::onUploadClicked()
@@ -41,25 +66,14 @@ void MainWindow::onUploadClicked()
         
         const QString filePath = selectedFiles.constFirst();
         qDebug() << "Selected file:" << filePath;
-        
-        QImage img(filePath);
-        if (img.isNull()) {
-            qDebug() << "Failed to load image:" << filePath;
-            return;
-        }
 
-        setImage(std::move(img));
+        if (!imageModel->loadFile(filePath)) {
+            QMessageBox::warning(this, tr("Error"), tr("Failed to load image."));
+        }
     }
 }
 
-void MainWindow::onResetClicked()
+void MainWindow::onClearClicked()
 {
-    setImage(QImage());
+    imageModel->clearImage();
 }
-
-void MainWindow::setImage(QImage img)
-{
-    uploadedImage.swap(img);
-    qDebug() << uploadedImage.size();
-}
-

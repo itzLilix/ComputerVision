@@ -1,4 +1,6 @@
 #pragma once
+#include "../image/ImageModel.h"
+#include "ImageView.h"
 
 #include <QMainWindow>
 #include <QImage>
@@ -15,10 +17,12 @@ public:
 
 private slots:
     void onUploadClicked();
-    void onResetClicked();
+    void onClearClicked();
 
 private:
     QPushButton* uploadButton;
-    QPushButton* resetButton;
-    QImage uploadedImage;
+    QPushButton* clearButton;
+
+    ImageModel* imageModel;
+    ImageView* imageView;
 };

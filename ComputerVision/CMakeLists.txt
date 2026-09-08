@@ -19,4 +19,4 @@ target_link_libraries(ComputerVision PRIVATE Qt6::Core Qt6::Widgets Qt6::Gui)
 target_sources(ComputerVision PRIVATE
     "ui/MainWindow.cpp"
     "ui/MainWindow.h"
- "image/ImageProcessor.h" "image/ImageProcessor.cpp" "ui/ImageView.h" "ui/ImageView.cpp" "image/ImageModel.h" "image/ImageModel.cpp")
+ "image/ImageProcessor.h" "image/ImageProcessor.cpp" "ui/ImageView.h" "ui/ImageView.cpp" "image/ImageModel.h" "image/ImageModel.cpp" "ui/ImageInfo.h" "ui/ImageInfo.cpp" "image/ImageMetadata.h")

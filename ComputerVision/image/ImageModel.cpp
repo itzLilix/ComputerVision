@@ -1,32 +1,44 @@
 #include "imagemodel.h"
 #include <QDebug>
+#include <QFileInfo>
 
 ImageModel::ImageModel(QObject* parent)
     : QObject(parent)
 {
+	fileMetadata = ImageFileMetadata();
 }
 
-bool ImageModel::loadFile(const QString path)
+void ImageModel::loadFile(const QString& path)
 {
+    QFileInfo fileInfo(path);
+    if (!fileInfo.exists()) {
+        emit LoadFailed(LoadError::FileNotFound, path);
+        return;
+    }
+
     QImage img(path);
     if (img.isNull()) {
         qDebug() << "Failed to load image:" << path;
-        return false;
+        emit LoadFailed(LoadError::InvalidFormat, path);
+        return;
     }
 
     m_originalImage = std::move(img);
     m_currentImage = m_originalImage;
-    m_filePath = path;
 
-    emit newImageLoaded(m_currentImage, m_filePath);
-    return true;
+    fileMetadata.path = path;
+    fileMetadata.fileSizeBytes = fileInfo.size();
+    fileMetadata.lastModified = fileInfo.lastModified();
+	fileMetadata.format = fileInfo.suffix().toLower();
+
+    emit newImageLoaded(m_currentImage, fileMetadata.path);
 }
 
 void ImageModel::clearImage()
 {
     m_originalImage = QImage();
     m_currentImage = QImage();
-    m_filePath.clear();
+    fileMetadata.path.clear();
 
-    emit imageCleared();
+    emit imageClosed();
 }

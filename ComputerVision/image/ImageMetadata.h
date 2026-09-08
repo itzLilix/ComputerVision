@@ -3,7 +3,18 @@
 #include <QString>
 #include <QDateTime>
 
-struct ImageMetadata {
+struct ExifData {
+    QString dateTimeOriginal;
+    QString cameraMake;
+    QString cameraModel;
+    QString exposureTime;
+    qreal fNumber = 0.0;
+    qint64 isoSpeed = 0;
+    qint64 orientation = 1;
+};
+
+struct ImageFileMetadata
+{
     QString path;
     qint64 fileSizeBytes = 0;
     QString format;
@@ -15,14 +26,4 @@ struct ImageLiveMetadata {
 	qint64 resolution[2] = { 0, 0 };
 	qint64 colorDepth = 0;
 	QString colorSpace;
-};
-
-struct ExifData {
-    QString dateTimeOriginal;
-    QString cameraMake;
-    QString cameraModel;
-    QString exposureTime;
-    double  fNumber = 0.0;
-    int     isoSpeed = 0;
-    int     orientation = 1;
 };

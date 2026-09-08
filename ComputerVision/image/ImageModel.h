@@ -2,6 +2,12 @@
 
 #include <QObject>
 #include <QImage>
+#include "ImageMetadata.h"
+
+enum class LoadError {
+    FileNotFound,
+    InvalidFormat
+};
 
 class ImageModel : public QObject {
     Q_OBJECT
@@ -10,19 +16,20 @@ public:
     explicit ImageModel(QObject* parent = nullptr);
 
     const QImage& image() const { return m_currentImage; }
-    const QString& filePath() const { return m_filePath; }
 
 public slots:
-    bool loadFile(const QString path);
+    void loadFile(const QString& path);
     void clearImage();
 
 signals:
     void newImageLoaded(const QImage& image, const QString& m_filePath);
+    void LoadFailed(LoadError error, const QString& filepath);
     void imageChanged(const QImage& image);
-    void imageCleared();
+    void imageClosed();
 
 private:
     QImage m_originalImage;
     QImage m_currentImage;
-    QString m_filePath;
+    ImageFileMetadata fileMetadata;
+    ExifData exifData;
 };

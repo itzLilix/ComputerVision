@@ -17,13 +17,20 @@ public:
     void setImage(QImage img);
 
 private slots:
-    void onUploadClicked();
-    void onClearClicked();
+    void onOpenClicked();
+    void onCloseClicked();
 
 private:
-    QPushButton* uploadButton;
-    QPushButton* clearButton;
-
     ImageModel* imageModel;
+    
     ImageView* imageView;
+
+    QAction* openAction;
+    QAction* saveAction;
+    QAction* closeImageAction;
+    QAction* exitAction;
+
+    void createActions();
+    void createMenus();
+	void connectErrorSignals();
 };

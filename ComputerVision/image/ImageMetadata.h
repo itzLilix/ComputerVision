@@ -1,13 +1,12 @@
 #pragma once
 
-#include <QString>
-#include <QDateTime>
+#include <QDateTime>;
 
 struct ExifData {
     QString dateTimeOriginal;
     QString cameraMake;
     QString cameraModel;
-    QString exposureTime;
+    qreal exposureTime = 0.0;
     qreal fNumber = 0.0;
     qint64 isoSpeed = 0;
     qint64 orientation = 1;
@@ -23,7 +22,9 @@ struct ImageFileMetadata
 };
 
 struct ImageLiveMetadata {
-	qint64 resolution[2] = { 0, 0 };
+    qint64 width = 0;
+    qint64 height = 0;
 	qint64 colorDepth = 0;
 	QString colorSpace;
+	QString colorModel;
 };

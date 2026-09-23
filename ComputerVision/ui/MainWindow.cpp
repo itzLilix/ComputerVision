@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QMenuBar> 
+#include <QActionGroup>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -14,77 +15,120 @@ MainWindow::MainWindow(QWidget* parent)
     auto* central = new QWidget(this);
     auto* mainLayout = new QHBoxLayout(central);
 
-    imageModel = new ImageModel(this);
-    imageView = new ImageView(this);
+    m_imageModel = new ImageModel(this);
+	m_imageProcessor = new ImageProcessor(this);
+    m_imageView = new ImageView(this);
 
-    mainLayout->addWidget(imageView, 1);
+    mainLayout->addWidget(m_imageView, 1);
     setCentralWidget(central);
 	mainLayout->setContentsMargins(0, 0, 0, 0);
 
-    // right-side panel stays — this is where ImageInfo/histogram
-    // widgets will live once you build them
     auto* rightBarLayout = new QVBoxLayout();
     mainLayout->addLayout(rightBarLayout);
+	mainLayout->setStretchFactor(rightBarLayout, 1);
+	mainLayout->setStretchFactor(m_imageView, 3);
+
+	auto* m_adjustmentPanel = new ImageAdjustmentPanel(m_imageModel, m_imageProcessor, this);
+    rightBarLayout->addWidget(m_adjustmentPanel);
+
+    m_histogram = new HistogramWidget(this);
+    connect(m_imageModel, &ImageModel::newImageLoaded, m_histogram, &HistogramWidget::onImageLoaded);
+    connect(m_imageModel, &ImageModel::imageChanged, m_histogram, &HistogramWidget::onImageChanged);
+	rightBarLayout->addWidget(m_histogram);
+    
     rightBarLayout->addStretch();
 
     createActions();
     createMenus();
+    connectErrorSignals();
 
-    connect(imageModel, &ImageModel::newImageLoaded,
-        imageView, &ImageView::setImage);
-    connect(imageModel, &ImageModel::imageChanged,
-        imageView, &ImageView::setImage);
-    connect(imageModel, &ImageModel::imageClosed, imageView,
-        [this] { imageView->setImage(QImage()); });
+    connect(m_imageModel, &ImageModel::newImageLoaded,
+        m_imageView, &ImageView::setImage);
+    connect(m_imageModel, &ImageModel::imageChanged,
+        m_imageView, &ImageView::setImage);
+    connect(m_imageModel, &ImageModel::imageClosed, m_imageView,
+        [this] { m_imageView->setImage(QImage()); });
 
-    connect(imageView, &ImageView::imageDropped, imageModel, &ImageModel::loadFile,
+    connect(m_imageView, &ImageView::imageDropped, m_imageModel, &ImageModel::loadFile,
         Qt::QueuedConnection);
 }
 
 void MainWindow::createActions()
 {
-    openAction = new QAction(tr("&Open..."), this);
-    openAction->setShortcut(QKeySequence::Open);
-    connect(openAction, &QAction::triggered, this, &MainWindow::onOpenClicked);
+    //File actions
+    m_openAction = new QAction(tr("&Open..."), this);
+    m_openAction->setShortcut(QKeySequence::Open);
+    connect(m_openAction, &QAction::triggered, this, &MainWindow::onOpenClicked);
 
-    saveAction = new QAction(tr("&Save..."), this);
-    saveAction->setShortcut(QKeySequence::Save);
-    saveAction->setEnabled(false); // wire up once save logic exists
+    m_saveAction = new QAction(tr("&Save..."), this);
+    m_saveAction->setShortcut(QKeySequence::Save);
+    m_saveAction->setEnabled(false); // wire up once save logic exists
 
-    closeImageAction = new QAction(tr("&Close Image"), this);
-    closeImageAction->setShortcut(QKeySequence::Close);
-    closeImageAction->setEnabled(false);
-    connect(closeImageAction, &QAction::triggered, this, &MainWindow::onCloseClicked);
+    m_closeImageAction = new QAction(tr("&Close Image"), this);
+    m_closeImageAction->setShortcut(QKeySequence::Close);
+    m_closeImageAction->setEnabled(false);
+    connect(m_closeImageAction, &QAction::triggered, this, &MainWindow::onCloseClicked);
 
-    exitAction = new QAction(tr("E&xit"), this);
-    exitAction->setShortcut(QKeySequence::Quit);
-    connect(exitAction, &QAction::triggered, this, &QWidget::close);
+    m_exitAction = new QAction(tr("E&xit"), this);
+    m_exitAction->setShortcut(QKeySequence::Quit);
+    connect(m_exitAction, &QAction::triggered, this, &QWidget::close);
+
+    //Image actions
+    m_showMetadataAction = new QAction(tr("&Metadata..."), this);
+    connect(m_showMetadataAction, &QAction::triggered, this, &MainWindow::onImageMetadataTriggered);
+
+    m_rotateActionGr = new QActionGroup(this);
+    QAction* rotateLeftAction = m_rotateActionGr->addAction(tr("Rotate Left"));
+    connect(rotateLeftAction, &QAction::triggered, this, [this]() {
+            m_imageModel->rotate(-90);
+        });
+    QAction* rotateRightAction = m_rotateActionGr->addAction(tr("Rotate Right"));
+    connect(rotateRightAction, &QAction::triggered, this, [this]() {
+            m_imageModel->rotate(90);
+        });
+    QAction* rotate180Action = m_rotateActionGr->addAction(tr("Rotate 180"));
+    connect(rotate180Action, &QAction::triggered, this, [this]() {
+            m_imageModel->rotate(180);
+        });
+
+    m_flipActionGr = new QActionGroup(this);
+	QAction* flipHorizontalAction = m_flipActionGr->addAction(tr("Flip Horizontal"));
+	connect(flipHorizontalAction, &QAction::triggered, this, [this]() {
+			m_imageModel->flip(true, false);
+		});
+	QAction* flipVerticalAction = m_flipActionGr->addAction(tr("Flip Vertical"));
+	connect(flipVerticalAction, &QAction::triggered, this, [this]() {
+			m_imageModel->flip(false, true);
+		});
 
     // enable/disable Save + Close based on whether an image is loaded
-    connect(imageModel, &ImageModel::newImageLoaded, this, [this] {
-        saveAction->setEnabled(true);
-        closeImageAction->setEnabled(true);
+    connect(m_imageModel, &ImageModel::newImageLoaded, this, [this] {
+        m_saveAction->setEnabled(true);
+        m_closeImageAction->setEnabled(true);
         });
-    connect(imageModel, &ImageModel::imageClosed, this, [this] {
-        saveAction->setEnabled(false);
-        closeImageAction->setEnabled(false);
+    connect(m_imageModel, &ImageModel::imageClosed, this, [this] {
+        m_saveAction->setEnabled(false);
+        m_closeImageAction->setEnabled(false);
         });
-
-	connectErrorSignals();
 }
 
 void MainWindow::createMenus()
 {
     auto* fileMenu = menuBar()->addMenu(tr("&File"));
-    fileMenu->addAction(openAction);
-    fileMenu->addAction(saveAction);
+    fileMenu->addAction(m_openAction);
+    fileMenu->addAction(m_saveAction);
     fileMenu->addSeparator();
-    fileMenu->addAction(closeImageAction);
+    fileMenu->addAction(m_closeImageAction);
     fileMenu->addSeparator();
-    fileMenu->addAction(exitAction);
+    fileMenu->addAction(m_exitAction);
 
-    menuBar()->addMenu(tr("&Image"));  // rotate/grayscale/etc. actions go here later
-    menuBar()->addMenu(tr("&View"));   // panel toggles go here later
+    auto* imageMenu = menuBar()->addMenu(tr("&Image"));
+    imageMenu->addAction(m_showMetadataAction);
+    imageMenu->addSeparator();
+	QMenu* rotateMenu = imageMenu->addMenu(tr("&Rotate"));
+	rotateMenu->addActions(m_rotateActionGr->actions());
+    QMenu* flipMenu = imageMenu->addMenu(tr("&Flip"));
+	flipMenu->addActions(m_flipActionGr->actions());
 }
 
 void MainWindow::onOpenClicked()
@@ -104,16 +148,16 @@ void MainWindow::onOpenClicked()
     const QString filePath = selectedFiles.constFirst();
     qDebug() << "Selected file:" << filePath;
 
-    imageModel->loadFile(filePath);
+    m_imageModel->loadFile(filePath);
 }
 
 void MainWindow::onCloseClicked()
 {
-    imageModel->clearImage();
+    m_imageModel->closeImage();
 }
 
 void MainWindow::connectErrorSignals() {
-	connect(imageModel, &ImageModel::LoadFailed, this, [this](LoadError error, const QString& filepath) {
+	connect(m_imageModel, &ImageModel::loadFailed, this, [this](LoadError error, const QString& filepath) {
 		QString errorMessage;
 		switch (error) {
 		case LoadError::FileNotFound:
@@ -128,4 +172,15 @@ void MainWindow::connectErrorSignals() {
 		}
 		QMessageBox::warning(this, tr("Error"), errorMessage);
 		});
+}
+
+void MainWindow::onImageMetadataTriggered()
+{
+    if (!m_imageInfoDialog) {
+        m_imageInfoDialog = new ImageInfoDialog(this, m_imageModel);
+    }
+
+    m_imageInfoDialog->show();
+    m_imageInfoDialog->raise();
+    m_imageInfoDialog->activateWindow();
 }

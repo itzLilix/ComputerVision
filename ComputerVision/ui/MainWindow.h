@@ -2,11 +2,12 @@
 
 #include "../image/ImageModel.h"
 #include "ImageView.h"
+#include "ImageInfo.h"
+#include "ImageAdjustmentPanel.h"
+#include "HistogramWidget.h"
 
 #include <QMainWindow>
-#include <QImage>
-
-class QPushButton;
+#include <QPointer>
 
 class MainWindow : public QMainWindow
 {
@@ -14,21 +15,31 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget* parent = nullptr);
 
-    void setImage(QImage img);
-
 private slots:
     void onOpenClicked();
     void onCloseClicked();
+    void onImageMetadataTriggered();
 
 private:
-    ImageModel* imageModel;
+    ImageModel* m_imageModel;
+    ImageProcessor* m_imageProcessor;
     
-    ImageView* imageView;
+    ImageView* m_imageView;
+    HistogramWidget* m_histogram;
+    ImageAdjustmentPanel* m_adjustmentPanel;
+    
+    QPointer<ImageInfoDialog> m_imageInfoDialog;
 
-    QAction* openAction;
-    QAction* saveAction;
-    QAction* closeImageAction;
-    QAction* exitAction;
+    //File actions
+    QAction* m_openAction;
+    QAction* m_saveAction;
+    QAction* m_closeImageAction;
+    QAction* m_exitAction;
+
+    //Image actions
+    QAction* m_showMetadataAction;
+    QActionGroup* m_rotateActionGr;
+    QActionGroup* m_flipActionGr;
 
     void createActions();
     void createMenus();

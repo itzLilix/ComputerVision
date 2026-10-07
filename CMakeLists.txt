@@ -16,3 +16,4 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 add_subdirectory ("ComputerVision")
+add_subdirectory ("MorphologicalTF")

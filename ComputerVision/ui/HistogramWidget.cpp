@@ -17,8 +17,8 @@ HistogramWidget::HistogramWidget(QWidget* parent)
 {
     m_chart = new QChart();
     m_chart->setTitle("Channel Histogram");
-    m_chart->legend()->setVisible(true);
-    m_chart->legend()->setAlignment(Qt::AlignBottom);
+    m_chart->legend()->setVisible(false);
+    //m_chart->legend()->setAlignment(Qt::AlignBottom);
 
     auto makeSeries = [this](const QString& name, const QColor& color, qreal opacity, bool inLegend)
         {
@@ -32,9 +32,6 @@ HistogramWidget::HistogramWidget(QWidget* parent)
             series->setVisible(false);
 
             m_chart->addSeries(series);
-            //const auto markers = m_chart->legend()->markers(series);
-            //if (!markers.isEmpty())
-            //    markers.first()->setVisible(inLegend);
 
             return series;
         };
@@ -79,7 +76,8 @@ HistogramWidget::ChannelBins HistogramWidget::computeHistogram(const QImage& ima
 {
     ChannelBins bins;
     if (image.isNull())
-        return bins;
+		return bins;
+    
 
     const QImage img = image.convertToFormat(QImage::Format_ARGB32);
     const int width = img.width();
@@ -157,4 +155,16 @@ void HistogramWidget::onImageChanged(const QImage& image)
         series->setVisible(true);
 
     rescaleYAxis();
+}
+
+void HistogramWidget::clearHistogram()
+{
+	for (auto* series : { m_beforeRed, m_beforeGreen, m_beforeBlue,
+						  m_afterRed, m_afterGreen, m_afterBlue })
+	{
+		series->clear();
+		series->setVisible(false);
+	}
+	m_maxBeforeCount = m_maxAfterCount = 1;
+	rescaleYAxis();
 }

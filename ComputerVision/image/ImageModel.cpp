@@ -38,6 +38,20 @@ void ImageModel::loadFile(const QString& path)
     emit newImageLoaded(m_currentImage, m_fileMetadata.path);
 }
 
+void ImageModel::saveImage(const QString& path)
+{
+	if (m_currentImage.isNull()) {
+		qDebug() << "No image to save.";
+		return;
+	}
+	if (!m_currentImage.save(path)) {
+		qDebug() << "Failed to save image to:" << path;
+	}
+	else {
+		qDebug() << "Image saved to:" << path;
+	}
+}
+
 std::optional<ExifData> ImageModel::collectExifData(const QString& path)
 {
     QFile imgFile(path);

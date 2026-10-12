@@ -17,6 +17,7 @@ public:
 
 private slots:
     void onOpenClicked();
+	void onSaveClicked();
     void onCloseClicked();
     void onImageMetadataTriggered();
 

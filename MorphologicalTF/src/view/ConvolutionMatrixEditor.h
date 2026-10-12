@@ -1,40 +1,40 @@
 #pragma once
 
-#include <QVector>
 #include <QWidget>
 
+class ConvolutionViewModel;
+class MatrixCellDelegate;
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
+class QPushButton;
 class QSpinBox;
 class QTableWidget;
 
-// Editor for the user-defined convolution filter: a matrix of weights, a divisor,
-// an offset and a few ready-made presets. The anchor is the cell (width / 2, height / 2).
+// Convolution matrix editor: preset selector, size and angle, the weight table, the tool
+// buttons, divisor and offset. Same structure as KernelPanel: it holds no state of its own,
+// sends commands to the view model and redraws itself on its signals.
 class ConvolutionMatrixEditor : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ConvolutionMatrixEditor(QWidget *parent = nullptr);
-
-    int matrixWidth() const;
-    int matrixHeight() const;
-    QVector<double> weights() const; // row-major, matrixWidth() * matrixHeight() values
-    double divisor() const;          // the effective value (resolved from "Auto"), never zero
-    double offset() const;
+    explicit ConvolutionMatrixEditor(ConvolutionViewModel &viewModel, QWidget *parent = nullptr);
 
 private:
-    void applyPreset(int presetIndex);
-    void setMatrixSize(int width, int height); // keeps the overlapping values, new cells are 0
-    void markCustom();
-    void updateDivisor();
+    void syncMatrix();      // size, table, anchor, divisor and offset <- view model
+    void syncPreset();      // preset combo and angle <- view model
+    void syncAutoDivisor(); // "Auto" checkbox and divisor enabled state <- view model
     void updateTableHeight();
 
+    ConvolutionViewModel &m_viewModel;
     QComboBox *m_presetCombo = nullptr;
     QSpinBox *m_widthSpin = nullptr;
     QSpinBox *m_heightSpin = nullptr;
+    QDoubleSpinBox *m_angleSpin = nullptr;
     QTableWidget *m_table = nullptr;
+    MatrixCellDelegate *m_delegate = nullptr;
+    QPushButton *m_anchorButton = nullptr;
     QCheckBox *m_autoDivisor = nullptr;
     QDoubleSpinBox *m_divisorSpin = nullptr;
     QDoubleSpinBox *m_offsetSpin = nullptr;

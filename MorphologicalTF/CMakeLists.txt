@@ -4,7 +4,7 @@ project(MorphologicalTF VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Concurrent)
 qt_standard_project_setup() # enables AUTOMOC / AUTOUIC / AUTORCC (Qt 6.3+)
 
 qt_add_executable(${PROJECT_NAME}
@@ -19,6 +19,12 @@ qt_add_executable(${PROJECT_NAME}
     src/model/MorphologyOp.h
     src/model/MorphProcessor.h
     src/model/MorphProcessor.cpp
+    src/model/ConvolutionMatrix.h
+    src/model/ConvolutionMatrix.cpp
+    src/model/FilterProcessor.h
+    src/model/FilterProcessor.cpp
+    src/model/ConvolutionPresets.h
+    src/model/ConvolutionPresets.cpp
  
     src/viewmodel/ImageViewModel.h
     src/viewmodel/ImageViewModel.cpp
@@ -26,6 +32,8 @@ qt_add_executable(${PROJECT_NAME}
     src/viewmodel/KernelViewModel.cpp
     src/viewmodel/ProcessingViewModel.h
     src/viewmodel/ProcessingViewModel.cpp
+    src/viewmodel/ConvolutionViewModel.h
+    src/viewmodel/ConvolutionViewModel.cpp
  
     src/view/ImageView.h
     src/view/ConvolutionMatrixEditor.h
@@ -43,7 +51,7 @@ qt_add_executable(${PROJECT_NAME}
 
 # Lets us write #include "model/ImageModel.h" from any layer
 target_include_directories(${PROJECT_NAME} PRIVATE src)
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Concurrent)
 
 # Uncomment to hide the console window on Windows:
 # set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE ON)

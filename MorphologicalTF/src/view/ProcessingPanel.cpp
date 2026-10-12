@@ -15,7 +15,7 @@
 namespace {
 
 // Stack indices; each operation in the combo remembers which page it uses
-enum Page { MorphologyPage, SharpenPage, MotionBlurPage, EmbossPage, MedianPage, CustomFilterPage };
+enum Page { MorphologyPage, FilterPage, SharpenPage, MotionBlurPage, EmbossPage, MedianPage, CustomFilterPage };
 
 constexpr int kPageRole = Qt::UserRole;
 constexpr int kMorphologyOpRole = Qt::UserRole + 1;
@@ -42,9 +42,11 @@ QDoubleSpinBox *makeFactorSpin(QWidget *parent)
 
 } // namespace
 
-ProcessingPanel::ProcessingPanel(ProcessingViewModel &viewModel, QWidget *parent)
+ProcessingPanel::ProcessingPanel(ProcessingViewModel &viewModel, KernelViewModel& kernelViewModel, ConvolutionViewModel& convolutionViewModel, QWidget *parent)
     : QWidget(parent)
     , m_viewModel(viewModel)
+    , m_kernelViewModel(kernelViewModel)
+    , m_convolutionViewModel(convolutionViewModel)
 {
     // Operation list: morphology first, a separator, then the filters
     m_operationCombo = new QComboBox(this);
@@ -57,6 +59,7 @@ ProcessingPanel::ProcessingPanel(ProcessingViewModel &viewModel, QWidget *parent
     for (MorphologyOp op : MorphologyOps::all())
         addOperation(MorphologyOps::displayName(op), MorphologyPage, static_cast<int>(op));
     m_operationCombo->insertSeparator(m_operationCombo->count());
+    addOperation(tr("Filter"), FilterPage);
     addOperation(tr("Sharpen"), SharpenPage);
     addOperation(tr("Motion Blur"), MotionBlurPage);
     addOperation(tr("Emboss"), EmbossPage);
@@ -70,6 +73,11 @@ ProcessingPanel::ProcessingPanel(ProcessingViewModel &viewModel, QWidget *parent
     morphologyPage->setWordWrap(true);
     morphologyPage->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     m_pages->addWidget(morphologyPage);
+
+    auto* filterPage = new QWidget(this);
+    auto* filterForm = new QFormLayout(filterPage);
+    filterForm->addWidget(new ConvolutionMatrixEditor(m_convolutionViewModel, filterPage));
+    m_pages->addWidget(filterPage);
 
     auto *sharpenPage = new QWidget(this);
     auto *sharpenForm = new QFormLayout(sharpenPage);
@@ -115,9 +123,6 @@ ProcessingPanel::ProcessingPanel(ProcessingViewModel &viewModel, QWidget *parent
     medianForm->addRow(tr("Window:"), m_medianSize);
     m_pages->addWidget(medianPage);
 
-    m_matrixEditor = new ConvolutionMatrixEditor(this);
-    m_pages->addWidget(m_matrixEditor);
-
     // Size the stack to the visible page only, so short pages do not inherit
     // the height of the matrix editor (QStackedLayout ignores pages with an Ignored policy)
     const auto fitStackToPage = [this](int current) {
@@ -159,23 +164,25 @@ void ProcessingPanel::applyCurrent()
         m_viewModel.applyMorphology(
             static_cast<MorphologyOp>(m_operationCombo->itemData(index, kMorphologyOpRole).toInt()));
         break;
-    case SharpenPage:
-        m_viewModel.applySharpen(m_sharpenAmount->value());
-        break;
-    case MotionBlurPage:
-        m_viewModel.applyMotionBlur(m_blurLength->value(), m_blurAngle->value());
-        break;
-    case EmbossPage:
-        m_viewModel.applyEmboss(m_embossAngle->value(), m_embossStrength->value());
-        break;
-    case MedianPage:
-        m_viewModel.applyMedian(m_medianSize->value());
-        break;
-    case CustomFilterPage:
-        m_viewModel.applyCustomFilter(m_matrixEditor->matrixWidth(), m_matrixEditor->matrixHeight(),
-                                      m_matrixEditor->weights(), m_matrixEditor->divisor(),
-                                      m_matrixEditor->offset());
-        break;
+    case FilterPage:
+        m_viewModel.applyFilter();
+    //case SharpenPage:
+    //    m_viewModel.applySharpen(m_sharpenAmount->value());
+    //    break;
+    //case MotionBlurPage:
+    //    m_viewModel.applyMotionBlur(m_blurLength->value(), m_blurAngle->value());
+    //    break;
+    //case EmbossPage:
+    //    m_viewModel.applyEmboss(m_embossAngle->value(), m_embossStrength->value());
+    //    break;
+    //case MedianPage:
+    //    m_viewModel.applyMedian(m_medianSize->value());
+    //    break;
+    //case CustomFilterPage:
+    //    m_viewModel.applyCustomFilter(m_matrixEditor->matrixWidth(), m_matrixEditor->matrixHeight(),
+    //                                  m_matrixEditor->weights(), m_matrixEditor->divisor(),
+    //                                  m_matrixEditor->offset());
+    //    break;
     }
 }
 

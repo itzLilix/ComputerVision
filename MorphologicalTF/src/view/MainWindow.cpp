@@ -5,6 +5,7 @@
 #include "view/ProcessingPanel.h"
 #include "viewmodel/ImageViewModel.h"
 #include "viewmodel/KernelViewModel.h"
+#include "viewmodel/ConvolutionViewModel.h"
 #include "viewmodel/ProcessingViewModel.h"
 
 #include <QAction>
@@ -35,11 +36,12 @@ QString firstLocalFile(const QMimeData *mime)
 
 } // namespace
 
-MainWindow::MainWindow(ImageViewModel &imageViewModel, KernelViewModel &kernelViewModel,
+MainWindow::MainWindow(ImageViewModel &imageViewModel, KernelViewModel &kernelViewModel, ConvolutionViewModel &convolutionViewModel,
                        ProcessingViewModel &processingViewModel, QWidget *parent)
     : QMainWindow(parent)
     , m_viewModel(imageViewModel)
     , m_kernelViewModel(kernelViewModel)
+    , m_convolutionViewModel(convolutionViewModel)
     , m_processingViewModel(processingViewModel)
 {
     setWindowTitle(tr("Morphology Lab"));
@@ -110,8 +112,10 @@ void MainWindow::createDocks()
     addDockWidget(Qt::RightDockWidgetArea, kernelDock);
 
     auto *processingDock = new QDockWidget(tr("Processing"), this);
-    processingDock->setWidget(new ProcessingPanel(m_processingViewModel, processingDock));
+    processingDock->setWidget(new ProcessingPanel(m_processingViewModel, m_kernelViewModel, m_convolutionViewModel, processingDock));
     addDockWidget(Qt::LeftDockWidgetArea, processingDock);
+
+    
 
     // Lets the user bring the dock back after closing it
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));

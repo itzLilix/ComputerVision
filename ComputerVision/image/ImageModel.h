@@ -22,6 +22,7 @@ public:
 
 public slots:
     void loadFile(const QString& path);
+	void saveImage(const QString& path);
     void setImage(const QImage& image);
     void closeImage();
 	void rotate(qreal angle);

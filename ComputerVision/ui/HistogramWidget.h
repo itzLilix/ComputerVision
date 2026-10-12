@@ -19,6 +19,7 @@ public:
 public slots:
     void onImageLoaded(const QImage& image);
     void onImageChanged(const QImage& image);
+    void clearHistogram();
 
 private:
     using Bins = std::array<int, 256>;

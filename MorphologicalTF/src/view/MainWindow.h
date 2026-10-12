@@ -5,6 +5,7 @@
 class ImageView;
 class ImageViewModel;
 class KernelViewModel;
+class ConvolutionViewModel;
 class ProcessingViewModel;
 class QAction;
 class QLabel;
@@ -16,7 +17,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(ImageViewModel &imageViewModel, KernelViewModel &kernelViewModel,
+    MainWindow(ImageViewModel &imageViewModel, KernelViewModel &kernelViewModel, ConvolutionViewModel &convolutionViewModel,
                ProcessingViewModel &processingViewModel, QWidget *parent = nullptr);
 
 protected:
@@ -39,6 +40,7 @@ private:
 
     ImageViewModel &m_viewModel;
     KernelViewModel &m_kernelViewModel;
+    ConvolutionViewModel &m_convolutionViewModel;
     ProcessingViewModel &m_processingViewModel;
     ImageView *m_imageView = nullptr;
     QLabel *m_statusLabel = nullptr;

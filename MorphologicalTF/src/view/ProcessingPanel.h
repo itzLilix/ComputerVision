@@ -3,6 +3,8 @@
 #include <QWidget>
 
 class ConvolutionMatrixEditor;
+class KernelViewModel;
+class ConvolutionViewModel;
 class ProcessingViewModel;
 class QComboBox;
 class QDoubleSpinBox;
@@ -17,13 +19,15 @@ class ProcessingPanel : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProcessingPanel(ProcessingViewModel &viewModel, QWidget *parent = nullptr);
+    explicit ProcessingPanel(ProcessingViewModel &viewModel, KernelViewModel& kernelViewModel, ConvolutionViewModel& convolutionViewModel, QWidget *parent = nullptr);
 
 private:
     void applyCurrent();
     void updateEnabled();
 
     ProcessingViewModel &m_viewModel;
+    KernelViewModel &m_kernelViewModel;
+    ConvolutionViewModel &m_convolutionViewModel;
     QComboBox *m_operationCombo = nullptr;
     QStackedWidget *m_pages = nullptr;
     QPushButton *m_applyButton = nullptr;

@@ -2,6 +2,7 @@
 #include "view/MainWindow.h"
 #include "viewmodel/ImageViewModel.h"
 #include "viewmodel/KernelViewModel.h"
+#include "viewmodel/ConvolutionViewModel.h"
 #include "viewmodel/ProcessingViewModel.h"
 
 #include <QApplication>
@@ -15,8 +16,9 @@ int main(int argc, char *argv[])
     ImageModel model;
     ImageViewModel viewModel(model);
     KernelViewModel kernelViewModel;
-    ProcessingViewModel processingViewModel(model, kernelViewModel);
-    MainWindow window(viewModel, kernelViewModel, processingViewModel);
+    ConvolutionViewModel convolutionViewModel;
+    ProcessingViewModel processingViewModel(model, kernelViewModel, convolutionViewModel);
+    MainWindow window(viewModel, kernelViewModel, convolutionViewModel, processingViewModel);
     window.show();
 
     return app.exec();

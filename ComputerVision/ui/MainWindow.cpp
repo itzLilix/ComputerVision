@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_histogram = new HistogramWidget(this);
     connect(m_imageModel, &ImageModel::newImageLoaded, m_histogram, &HistogramWidget::onImageLoaded);
     connect(m_imageModel, &ImageModel::imageChanged, m_histogram, &HistogramWidget::onImageChanged);
+	connect(m_imageModel, &ImageModel::imageClosed, m_histogram, &HistogramWidget::clearHistogram);
 	rightBarLayout->addWidget(m_histogram);
     
     rightBarLayout->addStretch();
@@ -62,7 +63,7 @@ void MainWindow::createActions()
 
     m_saveAction = new QAction(tr("&Save..."), this);
     m_saveAction->setShortcut(QKeySequence::Save);
-    m_saveAction->setEnabled(false); // wire up once save logic exists
+    connect(m_saveAction, &QAction::triggered, this, &MainWindow::onSaveClicked);
 
     m_closeImageAction = new QAction(tr("&Close Image"), this);
     m_closeImageAction->setShortcut(QKeySequence::Close);
@@ -149,6 +150,24 @@ void MainWindow::onOpenClicked()
     qDebug() << "Selected file:" << filePath;
 
     m_imageModel->loadFile(filePath);
+}
+
+void MainWindow::onSaveClicked()
+{
+	QFileDialog dialog(this);
+	dialog.setFileMode(QFileDialog::AnyFile);
+	dialog.setAcceptMode(QFileDialog::AcceptSave);
+	dialog.setNameFilter("Images (*.jpg *.jpeg *.png *.bmp);;All Files (*)");
+
+	if (!dialog.exec()) return;
+	QStringList selectedFiles = dialog.selectedFiles();
+	if (selectedFiles.isEmpty()) {
+		return;
+	}
+
+	const QString filePath = selectedFiles.constFirst();
+	qDebug() << "Selected file to save:" << filePath;
+	m_imageModel->saveImage(filePath);
 }
 
 void MainWindow::onCloseClicked()

@@ -1,8 +1,8 @@
 #include "view/MainWindow.h"
 
 #include "view/ImageView.h"
-#include "view/KernelPanel.h"
-#include "view/ProcessingPanel.h"
+#include "view/FilterPanel.h"
+#include "view/MorphologyPanel.h"
 #include "viewmodel/ImageViewModel.h"
 #include "viewmodel/KernelViewModel.h"
 #include "viewmodel/ConvolutionViewModel.h"
@@ -107,20 +107,22 @@ void MainWindow::createMenus()
 
 void MainWindow::createDocks()
 {
-    auto *kernelDock = new QDockWidget(tr("Structuring Element"), this);
-    kernelDock->setWidget(new KernelPanel(m_kernelViewModel, kernelDock));
-    addDockWidget(Qt::RightDockWidgetArea, kernelDock);
+    auto *morphologyDock = new QDockWidget(tr("Morphology"), this);
+    morphologyDock->setWidget(new MorphologyPanel(m_processingViewModel, m_kernelViewModel, morphologyDock));
+    addDockWidget(Qt::RightDockWidgetArea, morphologyDock);
 
-    auto *processingDock = new QDockWidget(tr("Processing"), this);
-    processingDock->setWidget(new ProcessingPanel(m_processingViewModel, m_kernelViewModel, m_convolutionViewModel, processingDock));
-    addDockWidget(Qt::LeftDockWidgetArea, processingDock);
+    auto *filterDock = new QDockWidget(tr("Filter"), this);
+    filterDock->setWidget(new FilterPanel(m_processingViewModel, m_convolutionViewModel, filterDock));
+    addDockWidget(Qt::RightDockWidgetArea, filterDock);
 
-    
+    // The two tools are alternatives, so they share one area as tabs
+    tabifyDockWidget(morphologyDock, filterDock);
+    morphologyDock->raise();
 
-    // Lets the user bring the dock back after closing it
+    // Lets the user bring a dock back after closing it
     QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
-    viewMenu->addAction(processingDock->toggleViewAction());
-    viewMenu->addAction(kernelDock->toggleViewAction());
+    viewMenu->addAction(morphologyDock->toggleViewAction());
+    viewMenu->addAction(filterDock->toggleViewAction());
 }
 
 void MainWindow::updateUi()

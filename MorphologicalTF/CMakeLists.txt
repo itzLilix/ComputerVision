@@ -45,8 +45,10 @@ qt_add_executable(${PROJECT_NAME}
     src/view/KernelPanel.cpp
     src/view/MainWindow.h
     src/view/MainWindow.cpp
-    src/view/ProcessingPanel.h
-    src/view/ProcessingPanel.cpp
+    src/view/FilterPanel.h
+    src/view/FilterPanel.cpp
+    src/view/MorphologyPanel.h
+    src/view/MorphologyPanel.cpp
 )
 
 # Lets us write #include "model/ImageModel.h" from any layer

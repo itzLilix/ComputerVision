@@ -52,7 +52,7 @@ public slots:
                            //double divisor, double offset);
 
     void applyFilter();
-
+    void applyMedian();
 signals:
     void canProcessChanged();
     void errorOccurred(const QString &message);

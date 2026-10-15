@@ -112,7 +112,7 @@ void MainWindow::createDocks()
     addDockWidget(Qt::RightDockWidgetArea, morphologyDock);
 
     auto *filterDock = new QDockWidget(tr("Filter"), this);
-    filterDock->setWidget(new FilterPanel(m_processingViewModel, m_convolutionViewModel, filterDock));
+    filterDock->setWidget(new FilterPanel(m_processingViewModel, m_convolutionViewModel, m_kernelViewModel, filterDock));
     addDockWidget(Qt::RightDockWidgetArea, filterDock);
 
     // The two tools are alternatives, so they share one area as tabs

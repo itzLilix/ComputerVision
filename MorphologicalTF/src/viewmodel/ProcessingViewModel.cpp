@@ -52,3 +52,12 @@ void ProcessingViewModel::applyFilter()
         });
     m_watcher->setFuture(future);
 }
+
+void ProcessingViewModel::applyMedian()
+{
+    QFuture<void> future = QtConcurrent::run([this] {
+        setBusy(true);
+        m_imageModel.setCurrent(FilterProcessor::median(m_imageModel.current(), m_kernelViewModel.kernel()));
+        });
+    m_watcher->setFuture(future);
+}

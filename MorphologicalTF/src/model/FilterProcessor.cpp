@@ -1,7 +1,10 @@
 #include "model/FilterProcessor.h"
 #include "model/Bounds.h"
+#include "model/SlidingHistogram.h"
 
 #include <QPoint>
+#include <QSet>
+#include <QtConcurrent>
 
 #include <algorithm>
 #include <cmath>
@@ -128,7 +131,6 @@ QImage median(const QImage& input, const Kernel& window)
         return input;
 
     const QImage image = input.convertToFormat(QImage::Format_ARGB32);
-
     const int width = image.width();
     const int height = image.height();
 
@@ -137,97 +139,14 @@ QImage median(const QImage& input, const Kernel& window)
     const auto* src = reinterpret_cast<const QRgb*>(image.constBits());
     auto* dst = reinterpret_cast<QRgb*>(output.bits());
 
-    Bounds box;
-    for (const QPoint& o : offsets)
-        box.include(o);
-
-    // Reused for every pixel, so there are no allocations in the loops
-    std::vector<std::uint8_t> reds;
-    std::vector<std::uint8_t> greens;
-    std::vector<std::uint8_t> blues;
-    reds.reserve(offsets.size());
-    greens.reserve(offsets.size());
-    blues.reserve(offsets.size());
-
-    auto medianOf = [](std::vector<std::uint8_t>& values) {
-        const auto middle = values.begin() + values.size() / 2;
-        std::nth_element(values.begin(), middle, values.end());
-        return static_cast<int>(*middle);
-        };
-
-    // ------------------------------------------------------------
-    // Interior
-    // ------------------------------------------------------------
-
-    const int xBegin = -box.minDx;
-    const int xEnd = width - 1 - box.maxDx;
-
-    const int yBegin = -box.minDy;
-    const int yEnd = height - 1 - box.maxDy;
-
-    for (int y = yBegin; y <= yEnd; ++y) {
-        const int rowStart = y * width;
-
-        for (int x = xBegin; x <= xEnd; ++x) {
-            const int index = rowStart + x;
-
-            reds.clear();
-            greens.clear();
-            blues.clear();
-
-            for (const QPoint& o : offsets) {
-                const QRgb p = src[index + o.y() * width + o.x()];
-
-                reds.push_back(static_cast<std::uint8_t>(qRed(p)));
-                greens.push_back(static_cast<std::uint8_t>(qGreen(p)));
-                blues.push_back(static_cast<std::uint8_t>(qBlue(p)));
-            }
-
-            dst[index] = qRgba(medianOf(reds), medianOf(greens), medianOf(blues), qAlpha(src[index]));
-        }
-    }
-
-    // ------------------------------------------------------------
-    // Border (pixels outside the image are ignored)
-    // ------------------------------------------------------------
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            if (x >= xBegin && x <= xEnd &&
-                y >= yBegin && y <= yEnd) {
-                continue;
-            }
-
-            reds.clear();
-            greens.clear();
-            blues.clear();
-
-            for (const QPoint& o : offsets) {
-                const int sx = x + o.x();
-                const int sy = y + o.y();
-
-                if (sx < 0 || sx >= width ||
-                    sy < 0 || sy >= height) {
-                    continue;
-                }
-
-                const QRgb p = src[sy * width + sx];
-
-                reds.push_back(static_cast<std::uint8_t>(qRed(p)));
-                greens.push_back(static_cast<std::uint8_t>(qGreen(p)));
-                blues.push_back(static_cast<std::uint8_t>(qBlue(p)));
-            }
-
-            const int index = y * width + x;
-
-            if (reds.empty()) { // the whole window is outside (anchor not on the shape)
-                dst[index] = src[index];
-                continue;
-            }
-
-            dst[index] = qRgba(medianOf(reds), medianOf(greens), medianOf(blues), qAlpha(src[index]));
-        }
-    }
+    SlidingHistogram::slideRows(src, width, height, offsets,
+        [&](int index, const SlidingHistogram::Histogram& r, const SlidingHistogram::Histogram& g,
+            const SlidingHistogram::Histogram& b, int count) {
+                dst[index] = (count == 0)
+                    ? src[index]
+                    : qRgba(r.select(count / 2), g.select(count / 2), b.select(count / 2),
+                        qAlpha(src[index]));
+        });
 
     return output;
 }

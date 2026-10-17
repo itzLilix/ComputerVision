@@ -25,6 +25,7 @@ qt_add_executable(${PROJECT_NAME}
     src/model/FilterProcessor.cpp
     src/model/ConvolutionPresets.h
     src/model/ConvolutionPresets.cpp
+    src/model/SlidingHistogram.h
  
     src/viewmodel/ImageViewModel.h
     src/viewmodel/ImageViewModel.cpp

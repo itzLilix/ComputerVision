@@ -1,5 +1,6 @@
 #include "MorphProcessor.h"
 #include "model/Bounds.h"
+#include "model/SlidingHistogram.h"
 
 QImage operator-(const QImage& a, const QImage& b) {
     if (a.size() != b.size() || a.format() != b.format()) {
@@ -27,125 +28,33 @@ namespace MorphProcessor {
 
 
     template <Extremum E>
-    QImage extremum(
-        const QImage& input,
-        const QList<QPoint>& offsets)
+    QImage extremum(const QImage& input, const QList<QPoint>& offsets)
     {
         if (input.isNull() || offsets.isEmpty())
             return input;
 
-        QImage image = input.convertToFormat(QImage::Format_ARGB32);
-
+        const QImage image = input.convertToFormat(QImage::Format_ARGB32);
         const int width = image.width();
         const int height = image.height();
 
         QImage output(image.size(), image.format());
 
-        const auto* src =
-            reinterpret_cast<const QRgb*>(image.constBits());
+        const auto* src = reinterpret_cast<const QRgb*>(image.constBits());
+        auto* dst = reinterpret_cast<QRgb*>(output.bits());
 
-        auto* dst =
-            reinterpret_cast<QRgb*>(output.bits());
+        const int emptyValue = (E == Extremum::Min) ? 255 : 0;
 
-        int defaultValue = (E == Extremum::Min) ? 255 : 0;
-
-        // Kernel offsets relative to the anchor.
-        Bounds box;
-        for (const QPoint& o : offsets)
-            box.include(o);
-
-        // ------------------------------------------------------------
-        // Interior
-        // ------------------------------------------------------------
-
-        const int xBegin = -box.minDx;
-        const int xEnd = width - 1 - box.maxDx;
-
-        const int yBegin = -box.minDy;
-        const int yEnd = height - 1 - box.maxDy;
-
-        for (int y = yBegin; y <= yEnd; ++y)
-        {
-            const int rowStart = y * width;
-
-            for (int x = xBegin; x <= xEnd; ++x)
-            {
-                const int index = rowStart + x;
-
-                int resR = defaultValue;
-                int resG = defaultValue;
-                int resB = defaultValue;
-
-                for (const QPoint& o : offsets)
-                {
-                    const QRgb p = src[index + o.y() * width + o.x()];
-
-                    if constexpr (E == Extremum::Min)
-                    {
-                        resR = std::min(resR, qRed(p));
-                        resG = std::min(resG, qGreen(p));
-                        resB = std::min(resB, qBlue(p));
-                    }
-                    else
-                    {
-                        resR = std::max(resR, qRed(p));
-                        resG = std::max(resG, qGreen(p));
-                        resB = std::max(resB, qBlue(p));
-                    }
-                }
-
-                dst[index] = qRgb(resR, resG, resB);
-            }
-        }
-
-        // ------------------------------------------------------------
-        // Border
-        // ------------------------------------------------------------
-
-        for (int y = 0; y < height; ++y)
-        {
-            for (int x = 0; x < width; ++x)
-            {
-                if (x >= xBegin && x <= xEnd &&
-                    y >= yBegin && y <= yEnd)
-                {
-                    continue;
-                }
-
-                int resR = defaultValue;
-                int resG = defaultValue;
-                int resB = defaultValue;
-
-                for (const QPoint& o : offsets)
-                {
-                    const int sx = x + o.x();
-                    const int sy = y + o.y();
-
-                    if (sx < 0 || sx >= width ||
-                        sy < 0 || sy >= height)
-                    {
-                        continue;
+        SlidingHistogram::slideRows(src, width, height, offsets,
+            [&](int index, const SlidingHistogram::Histogram& r, const SlidingHistogram::Histogram& g,
+                const SlidingHistogram::Histogram& b, int count) {
+                    if (count == 0) {
+                        dst[index] = qRgb(emptyValue, emptyValue, emptyValue);
+                        return;
                     }
 
-                    const QRgb p = src[sy * width + sx];
-
-                    if constexpr (E == Extremum::Min)
-                    {
-                        resR = std::min(resR, qRed(p));
-                        resG = std::min(resG, qGreen(p));
-                        resB = std::min(resB, qBlue(p));
-                    }
-                    else
-                    {
-                        resR = std::max(resR, qRed(p));
-                        resG = std::max(resG, qGreen(p));
-                        resB = std::max(resB, qBlue(p));
-                    }
-                }
-
-                dst[y * width + x] = qRgb(resR, resG, resB);
-            }
-        }
+                    const int target = (E == Extremum::Min) ? 0 : count - 1;
+                    dst[index] = qRgb(r.select(target), g.select(target), b.select(target));
+            });
 
         return output;
     }
